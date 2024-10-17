@@ -18,7 +18,7 @@ public class AccountDAO
         List<Account> accounts = new ArrayList<>();
         try
         {
-            String sql = "select all from account;";
+            String sql = "SELECT * FROM account;";
             PreparedStatement ps = connection.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
             while(rs.next())
@@ -34,18 +34,41 @@ public class AccountDAO
         return accounts;
     }
 
+    public Account getAccountById(int id)
+    {
+        Connection connection = ConnectionUtil.getConnection();
+        try
+        {
+            String sql = "SELECT * FROM account WHERE account_id=?;";
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setInt(1, id);
+
+            ResultSet rs = ps.executeQuery();
+            while(rs.next())
+            {
+                Account account = new Account(rs.getInt("account_id"), rs.getString("username"), rs.getString("password"));
+                return account;
+            }
+        }
+        catch(SQLException e)
+        {
+            System.out.println(e.getMessage());
+        }
+        return null;
+    }
+
     /**
      * Insert a new account into Account table.
      * 
      * @param account
      * @return an account object that is inserted.
      */
-    public Account insert(Account account)
+    public Account insertAccount(Account account)
     {
         Connection connection = ConnectionUtil.getConnection();
         try
         {
-            String sql = "insert into account (username, password) values (?,?);";
+            String sql = "INSERT INTO account (username, password) VALUES (?,?);";
             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, account.getUsername());
             ps.setString(2, account.getPassword());
@@ -65,8 +88,49 @@ public class AccountDAO
         return null;
     }
 
-    // public Account update
-    //public Account delete
+    /**
+     * Update account in Account table by account id.
+     * 
+     * @param account
+     * @return
+     */
+    public void updateAccount(int id, Account account)
+    {
+        Connection connection = ConnectionUtil.getConnection();
+        try
+        {
+            String sql = "UPDATE account SET username=?, password=? WHERE account_id=?;";
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, account.getUsername());
+            ps.setString(2, account.getPassword());
+            ps.setInt(3, id);
+
+            ps.executeUpdate();
+        }
+        catch(SQLException e)
+        {
+            System.out.println(e.getMessage());
+        }
+    }
+    
+    public void deleteAccount(int id, Account account)
+    {
+        Connection connection = ConnectionUtil.getConnection();
+        try
+        {
+            String sql = "DELETE * from account WHERE accont_id=?;";
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, account.getUsername());
+            ps.setString(2, account.getPassword());
+            ps.setInt(3, id);
+
+            ps.executeUpdate();
+        }
+        catch(SQLException e)
+        {
+            System.out.println(e.getMessage());
+        } 
+    }
     
     /**
      * Check if username already exists in the database.
@@ -74,7 +138,7 @@ public class AccountDAO
      * @param username
      * @return true if usename already exists, otherwise, false.
      */
-    public boolean isUsernameExisted(String username)
+    public boolean alreadyExist(String username)
     {
         Connection connection = ConnectionUtil.getConnection();
         try
