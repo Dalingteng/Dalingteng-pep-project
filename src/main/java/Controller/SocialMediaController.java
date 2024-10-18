@@ -6,6 +6,8 @@ import Service.AccountService;
 import Service.MessageService;
 import Model.Account;
 import Model.Message;
+
+import java.sql.SQLException;
 import java.util.*;
 
 /**
@@ -32,7 +34,14 @@ public class SocialMediaController {
     public Javalin startAPI() {
         Javalin app = Javalin.create();
         app.get("example-endpoint", this::exampleHandler);
-        app.get("/accounts/{account_id}/messages", this:: getMessagesByAccountId);
+        app.post("/register", this::createAccount);
+        app.post("/login", this::loginAccount);
+        app.post("messages", this::createMessage);
+        app.get("messages", this::getAllMessages);
+        app.get("/messages/{message_id}", this::getMessageByMessageId);
+        app.delete("/messages/{message_id}", this::deleteMessageByMessageId);
+        app.patch("/messages/{message_id}", this::updateMessageByMessageId);
+        app.get("/accounts/{account_id}/messages", this:: getAllMessagesByAccountId);
 
         return app;
     }
@@ -46,19 +55,64 @@ public class SocialMediaController {
         context.json("sample text");
     }
 
-    private void getMessagesByAccountId(Context ctx)
+    private void createAccount(Context ctx)
     {
-        int accountId = Integer.parseInt(ctx.pathParam("account_id"));
-        List<Message> messages = messageService.getMessagesByAccountId(accountId);
+
+    }
+    private void loginAccount(Context ctx)
+    {
+
+    }
+    private void createMessage(Context ctx)
+    {
+
+    }
+    private void getAllMessages(Context ctx) throws SQLException
+    {
+        List<Message> messages = messageService.getAllMessages();
         if(messages.isEmpty())
         {
-            ctx.json(messages);
             ctx.status(200);
         }
-        else 
+        ctx.json(messages);
+    }
+    
+    private void getMessageByMessageId(Context ctx) throws SQLException
+    {
+        int messageId = Integer.parseInt(ctx.pathParam("message_id"));
+        Message message = messageService.getMessageByMessageId(messageId);
+        if(message == null) 
         { 
-            ctx.json(messages);
+            ctx.status(200);
         }
+        else
+        {
+            ctx.json(message);
+        }
+    }
+    
+    private void deleteMessageByMessageId(Context ctx) throws SQLException
+    {
+        int messageId = Integer.parseInt(ctx.pathParam("message_id"));
+        Message message = messageService.deleteMessageByMessageId(messageId);
+        if(message == null) 
+        { 
+            ctx.status(200);    
+        }
+        ctx.json(message);
+    }
+    
+    private void updateMessageByMessageId(Context ctx){}
+
+    private void getAllMessagesByAccountId(Context ctx) throws SQLException
+    {
+        int accountId = Integer.parseInt(ctx.pathParam("account_id"));
+        List<Message> messages = messageService.getAllMessagesByAccountId(accountId);
+        if(messages.isEmpty())
+        {
+            ctx.status(200);
+        }
+        ctx.json(messages);
     }
 
 }
