@@ -1,5 +1,6 @@
 package DAO;
 
+import Model.Account;
 import Model.Message;
 import Util.ConnectionUtil;
 import java.sql.*;
@@ -8,10 +9,25 @@ import java.util.*;
 
 public class MessageDAO 
 {
-    // private Message createMessage(Message message, Account account)
-    // {
+    public Message createMessage(Message message, Account account) throws SQLException
+    {
+        Connection connection = ConnectionUtil.getConnection();
+        String sql = "INSERT INTO message(posted_by, message_text, time_posted_epoch) VALUES (?, ?, ?);";
+        PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+        ps.setInt(1, message.getPosted_by());
+        ps.setString(2, message.getMessage_text());
+        ps.setLong(3, message.getTime_posted_epoch());
+        
+        ps.executeUpdate();
+        ResultSet rs = ps.getGeneratedKeys();
+        if(rs.next())
+        {
+            int generatedMessageId = rs.getInt(1);
+            return new Message(generatedMessageId, message.getPosted_by(), message.getMessage_text(), message.getTime_posted_epoch());
+        }
+        return null;
+    }
 
-    // }
     public List<Message> getAllMessages() throws SQLException
     {
         Connection connection = ConnectionUtil.getConnection();
@@ -39,26 +55,34 @@ public class MessageDAO
             Message message = new Message(rs.getInt("message_id"), rs.getInt("posted_by"), rs.getString("message_text"), rs.getLong("time_posted_epoch"));
             return message;
         }
-    
         return null;
     }
 
-    public Message deleteMessageByMessageId(int id) throws SQLException
+    public boolean deleteMessageByMessageId(int id) throws SQLException
     {
         Connection connection = ConnectionUtil.getConnection();
-        String sql = "DELETE * FROM message WHERE message_id=?;";
+        String sql = "DELETE FROM message WHERE message_id=?;";
         PreparedStatement ps = connection.prepareStatement(sql);
         ps.setInt(1, id);
-        ResultSet rs = ps.executeQuery();
-        while(rs.next())
-        {
-            Message message = new Message(rs.getInt("message_id"), rs.getInt("posted_by"), rs.getString("message_text"), rs.getLong("time_posted_epoch"));
-            return message;
-        }
-    
-        return null;
+        int rowsAffected = ps.executeUpdate();
+        return rowsAffected > 0;
     }
-    // private Message updateMessageByMessageId(int id){}
+
+    public void updateMessageByMessageId(int id, Message message) throws SQLException
+    {
+        Connection connection = ConnectionUtil.getConnection();
+        String sql = "UPDATE message SET posted_by=?, message_text=?, time_posted_epoch=?) WHERE message_id=?;";
+        PreparedStatement ps = connection.prepareStatement(sql);
+
+        // Message message = getMessageByMessageId(id);
+
+        ps.setInt(1, message.getPosted_by());
+        ps.setString(2, message.getMessage_text());
+        ps.setLong(3, message.getTime_posted_epoch());
+        ps.setInt(4, id);
+        ps.executeUpdate();
+        // return message;
+    }
 
     public List<Message> getMessageByAccountId(int accountId) throws SQLException
     {

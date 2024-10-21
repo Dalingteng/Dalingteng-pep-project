@@ -1,9 +1,14 @@
 package Service;
 
+import static org.mockito.ArgumentMatchers.nullable;
+
 import java.sql.SQLException;
 import java.util.List;
 
+import javax.management.RuntimeErrorException;
+
 import DAO.MessageDAO;
+import Model.Account;
 import Model.Message;
 
 public class MessageService {
@@ -27,10 +32,35 @@ public class MessageService {
     // {
 
     // }
-    // private Message createMessage(Message message, Account account)
-    // {
+    public Message createMessage(Message message, Account account) throws SQLException
+    {
+        // Check if the account exists
+        if(account == null)
+        {
+            throw new RuntimeException("Account must exist before posting a message.");
+        }
 
-    // }
+        // Validate the message
+        validateMessage(message);
+
+        // Insert the message into the database
+        Message createdMessage = messageDao.createMessage(message, account);
+        return createdMessage;
+    }
+    private void validateMessage(Message message) 
+    {
+        // Check if the message is empty
+        if(message.getMessage_text().trim().isEmpty())
+        {
+            throw new RuntimeException("Message text cannot be empty.");
+        }
+
+        // Check if the message is over 255 characters
+        if(message.getMessage_text().length() > 255)
+        {
+            throw new RuntimeException("Message text cannot be over 255 characters");
+        }
+    }
     public List<Message> getAllMessages() throws SQLException
     {
         List<Message> messages = messageDao.getAllMessages();
@@ -43,12 +73,32 @@ public class MessageService {
         return message;
     }
     
-    public Message deleteMessageByMessageId(int id) throws SQLException
+    public boolean deleteMessageByMessageId(int id) throws SQLException
     {
-        Message deletedMessage = messageDao.deleteMessageByMessageId(id);
-        return deletedMessage;
+        boolean isDeleted = messageDao.deleteMessageByMessageId(id);
+        return isDeleted;
     }
-    // private Message updateMessageByMessageId(int id){}
+
+    public Message updateMessageByMessageId(int id, Message message) throws SQLException
+    {
+        Message retrievedMessage = messageDao.getMessageByMessageId(id);
+        
+        // Check if the message exists
+        if(retrievedMessage == null)
+        {
+            throw new RuntimeException("Message not found.");
+        }
+
+        // Update the message text 
+        retrievedMessage.setMessage_text(message.getMessage_text());
+
+        // Validate the new message
+        validateMessage(retrievedMessage);
+
+        // Update the message in the database
+        messageDao.updateMessageByMessageId(retrievedMessage.getMessage_id(), message);
+        return retrievedMessage;
+    }
 
     public List<Message> getAllMessagesByAccountId(int accountId) throws SQLException 
     {

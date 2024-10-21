@@ -10,6 +10,10 @@ import Model.Message;
 import java.sql.SQLException;
 import java.util.*;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * TODO: You will need to write your own endpoints and handlers for your controller. The endpoints you will need can be
  * found in readme.md as well as the test cases. You should
@@ -33,8 +37,7 @@ public class SocialMediaController {
      */
     public Javalin startAPI() {
         Javalin app = Javalin.create();
-        app.get("example-endpoint", this::exampleHandler);
-        app.post("/register", this::createAccount);
+        app.post("/register", this::registerAccount);
         app.post("/login", this::loginAccount);
         app.post("messages", this::createMessage);
         app.get("messages", this::getAllMessages);
@@ -46,16 +49,7 @@ public class SocialMediaController {
         return app;
     }
 
-    /**
-     * This is an example handler for an example endpoint.
-     * @param context The Javalin Context object manages information about both the HTTP request and response.
-     */
-    private void exampleHandler(Context context) 
-    {
-        context.json("sample text");
-    }
-
-    private void createAccount(Context ctx)
+    private void registerAccount(Context ctx)
     {
 
     }
@@ -63,56 +57,106 @@ public class SocialMediaController {
     {
 
     }
-    private void createMessage(Context ctx)
-    {
 
+    // ## 3: Our API should be able to process the creation of new messages.
+    private void createMessage(Context ctx) throws JsonProcessingException, SQLException
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        Message message = mapper.readValue(ctx.body(), Message.class);
+        try 
+        {
+            Account account = accountService.getAccountById(message.getPosted_by());
+            Message createdMessage = messageService.createMessage(message, account);
+            ctx.json(mapper.writeValueAsString(createdMessage));
+        }
+        catch(Exception e)
+        {
+            // Set reponse status to 400 if the creation of message is not successfully 
+            ctx.status(400);
+        }
     }
+
+    // ## 4: Our API should be able to retrieve all messages.
     private void getAllMessages(Context ctx) throws SQLException
     {
         List<Message> messages = messageService.getAllMessages();
-        if(messages.isEmpty())
+        if(!messages.isEmpty())
+        {
+            ctx.json(messages);
+        }
+        else
         {
             ctx.status(200);
+            ctx.json(messages);
         }
-        ctx.json(messages);
     }
     
+    // ## 5: Our API should be able to retrieve a message by its ID.
     private void getMessageByMessageId(Context ctx) throws SQLException
     {
         int messageId = Integer.parseInt(ctx.pathParam("message_id"));
         Message message = messageService.getMessageByMessageId(messageId);
-        if(message == null) 
+        if(message != null) 
         { 
-            ctx.status(200);
+            ctx.json(message);
         }
         else
         {
-            ctx.json(message);
+            ctx.status(200);
         }
     }
     
+    // ## 6: Our API should be able to delete a message identified by a message ID.
     private void deleteMessageByMessageId(Context ctx) throws SQLException
     {
         int messageId = Integer.parseInt(ctx.pathParam("message_id"));
-        Message message = messageService.deleteMessageByMessageId(messageId);
-        if(message == null) 
-        { 
-            ctx.status(200);    
+        Message message = messageService.getMessageByMessageId(messageId);
+        if(message != null)
+        {
+            messageService.deleteMessageByMessageId(messageId);
+            ctx.json(message);
         }
-        ctx.json(message);
+        else
+        {
+            ctx.status(200);
+        }
     }
-    
-    private void updateMessageByMessageId(Context ctx){}
 
+    // ## 7: Our API should be able to update a message text identified by a message ID.
+    private void updateMessageByMessageId(Context ctx) throws JsonProcessingException, SQLException
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        Message message = mapper.readValue(ctx.body(), Message.class);
+        try 
+        {   
+            // Get the message id 
+            int messageId = Integer.parseInt(ctx.pathParam("message_id"));
+            message.setMessage_id(messageId);
+
+            // Update the message with new value
+            Message updatedMessage = messageService.updateMessageByMessageId(messageId, message);
+            ctx.json(updatedMessage);
+        }
+        catch(Exception e)
+        {
+            // Set reponse status to 400 if the update of message is not successfully 
+            ctx.status(400);
+        }
+    }
+
+    // ## 8: Our API should be able to retrieve all messages written by a particular user.
     private void getAllMessagesByAccountId(Context ctx) throws SQLException
     {
         int accountId = Integer.parseInt(ctx.pathParam("account_id"));
         List<Message> messages = messageService.getAllMessagesByAccountId(accountId);
-        if(messages.isEmpty())
+        if(!messages.isEmpty())
+        {
+            ctx.json(messages);
+        }
+        else
         {
             ctx.status(200);
+            ctx.json(messages);
         }
-        ctx.json(messages);
     }
-
 }

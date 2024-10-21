@@ -34,7 +34,7 @@ public class AccountDAO
         return accounts;
     }
 
-    public Account getAccountById(int id)
+    public Account getAccountByAccountId(int id)
     {
         Connection connection = ConnectionUtil.getConnection();
         try

@@ -6,14 +6,19 @@ import java.util.*;
 
 public class AccountService
 {
-    private AccountDAO accountDAO;
+    private AccountDAO accountDao;
     public AccountService()
     {
-        accountDAO = new AccountDAO();
+        accountDao = new AccountDAO();
     }
-    public AccountService(AccountDAO accountDAO)
+    public AccountService(AccountDAO accountDao)
     {
-        this.accountDAO = accountDAO;
+        this.accountDao = accountDao;
+    }
+    public Account getAccountById(int posted_by) 
+    {
+        Account account = accountDao.getAccountByAccountId(posted_by);    
+        return account;
     }
 
     
