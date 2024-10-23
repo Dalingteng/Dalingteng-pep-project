@@ -7,11 +7,6 @@ import java.util.*;
 
 public class AccountDAO 
 {
-    /**
-     * Retrieve all accounts from Account table.
-     * 
-     * @return a list of accounts. If there is no account, return null.
-     */
     public List<Account> getAllAccounts()
     {
         Connection connection = ConnectionUtil.getConnection();
@@ -34,66 +29,82 @@ public class AccountDAO
         return accounts;
     }
 
-    public Account getAccountByAccountId(int id)
+    public Account getAccountByAccountId(int id) throws SQLException
     {
         Connection connection = ConnectionUtil.getConnection();
-        try
-        {
-            String sql = "SELECT * FROM account WHERE account_id=?;";
-            PreparedStatement ps = connection.prepareStatement(sql);
-            ps.setInt(1, id);
+        String sql = "SELECT * FROM account WHERE account_id=?;";
+        PreparedStatement ps = connection.prepareStatement(sql);
+        ps.setInt(1, id);
 
-            ResultSet rs = ps.executeQuery();
-            while(rs.next())
-            {
-                Account account = new Account(rs.getInt("account_id"), rs.getString("username"), rs.getString("password"));
-                return account;
-            }
-        }
-        catch(SQLException e)
+        ResultSet rs = ps.executeQuery();
+        while(rs.next())
         {
-            System.out.println(e.getMessage());
+            Account account = new Account(rs.getInt("account_id"), rs.getString("username"), rs.getString("password"));
+            return account;
+        }
+        return null;
+    }
+    
+    /**
+     * Check if username already exists in the database.
+     * 
+     * @param username
+     * @return true if username already exists, otherwise, false.
+     */
+    public boolean alreadyExist(String username) throws SQLException
+    {
+        Connection connection = ConnectionUtil.getConnection();
+        String sql = "SELECT COUNT(*) FROM account WHERE username=?;";
+        PreparedStatement ps = connection.prepareStatement(sql);
+        ps.setString(1, username);
+        
+        ResultSet rs = ps.executeQuery();
+        while(rs.next())
+        {
+            if(rs.getInt(1) > 0) 
+                return true;
+        }
+        return false;
+    }
+
+    public Account getAccountByUsername(String username) throws SQLException
+    {
+        Connection connection = ConnectionUtil.getConnection();
+        
+        String sql = "SELECT * FROM account WHERE username=?;";
+        PreparedStatement ps = connection.prepareStatement(sql);
+        ps.setString(1, username);
+
+        ResultSet rs = ps.executeQuery();
+        while(rs.next())
+        {
+            Account account = new Account(rs.getInt("account_id"), rs.getString("username"), rs.getString("password"));
+            return account;
+        }
+        return null;
+ 
+ 
+    }
+
+    public Account insertAccount(Account account) throws SQLException
+    {
+        Connection connection = ConnectionUtil.getConnection();
+        String sql = "INSERT INTO account (username, password) VALUES (?,?);";
+        PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+        ps.setString(1, account.getUsername());
+        ps.setString(2, account.getPassword());
+        
+        ps.executeUpdate();
+        ResultSet rs = ps.getGeneratedKeys();
+        if(rs.next())
+        {
+            int generated_account_id = rs.getInt(1);
+            return new Account(generated_account_id, account.getUsername(), account.getPassword());
         }
         return null;
     }
 
-    /**
-     * Insert a new account into Account table.
-     * 
-     * @param account
-     * @return an account object that is inserted.
-     */
-    public Account insertAccount(Account account)
-    {
-        Connection connection = ConnectionUtil.getConnection();
-        try
-        {
-            String sql = "INSERT INTO account (username, password) VALUES (?,?);";
-            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, account.getUsername());
-            ps.setString(2, account.getPassword());
-            
-            ps.executeUpdate();
-            ResultSet rs = ps.getGeneratedKeys();
-            if(rs.next())
-            {
-                int generated_account_id = (int) rs.getLong(1);
-                return new Account(generated_account_id, account.getUsername(), account.getPassword());
-            }
-        }
-        catch(SQLException e)
-        {
-            System.out.println(e.getMessage());
-        }
-        return null;
-    }
 
-    /**
-     * Update account in Account table by account id.
-     * 
-     * @param account
-     * @return
-     */
     public void updateAccount(int id, Account account)
     {
         Connection connection = ConnectionUtil.getConnection();
@@ -130,34 +141,5 @@ public class AccountDAO
         {
             System.out.println(e.getMessage());
         } 
-    }
-    
-    /**
-     * Check if username already exists in the database.
-     * 
-     * @param username
-     * @return true if usename already exists, otherwise, false.
-     */
-    public boolean alreadyExist(String username)
-    {
-        Connection connection = ConnectionUtil.getConnection();
-        try
-        {
-            String sql = "select count(*) from account where username=?;";
-            PreparedStatement ps = connection.prepareStatement(sql);
-            ps.setString(1, username);
-            
-            
-            ResultSet rs = ps.executeQuery();
-            if(rs.next())
-            {
-                return true;
-            }
-        }
-        catch(SQLException e)
-        {
-            System.out.println(e.getMessage());
-        }
-        return false;
     }
 }

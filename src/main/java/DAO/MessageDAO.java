@@ -71,17 +71,12 @@ public class MessageDAO
     public void updateMessageByMessageId(int id, Message message) throws SQLException
     {
         Connection connection = ConnectionUtil.getConnection();
-        String sql = "UPDATE message SET posted_by=?, message_text=?, time_posted_epoch=?) WHERE message_id=?;";
+        String sql = "UPDATE message SET message_text=? WHERE message_id=?;";
         PreparedStatement ps = connection.prepareStatement(sql);
 
-        // Message message = getMessageByMessageId(id);
-
-        ps.setInt(1, message.getPosted_by());
-        ps.setString(2, message.getMessage_text());
-        ps.setLong(3, message.getTime_posted_epoch());
-        ps.setInt(4, id);
+        ps.setString(1, message.getMessage_text());
+        ps.setInt(2, id);
         ps.executeUpdate();
-        // return message;
     }
 
     public List<Message> getMessageByAccountId(int accountId) throws SQLException
@@ -98,9 +93,6 @@ public class MessageDAO
             messages.add(message);
         }
         return messages;
-    }
-
-    
-    
+    } 
 
 }

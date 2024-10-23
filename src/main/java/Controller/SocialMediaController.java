@@ -7,11 +7,12 @@ import Service.MessageService;
 import Model.Account;
 import Model.Message;
 
+import static org.mockito.ArgumentMatchers.nullable;
+
 import java.sql.SQLException;
 import java.util.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -48,11 +49,24 @@ public class SocialMediaController {
 
         return app;
     }
-
-    private void registerAccount(Context ctx)
+    // ## 1: Our API should be able to process new User registrations.
+    private void registerAccount(Context ctx) throws JsonProcessingException, SQLException
     {
-
+        ObjectMapper mapper = new ObjectMapper();
+        Account account = mapper.readValue(ctx.body(), Account.class);
+        try 
+        {
+            Account registeredAccount = accountService.registerAccount(account);
+            ctx.json(mapper.writeValueAsString(registeredAccount));
+        }
+        catch(Exception e)
+        {
+            // Set reponse status to 400 if the registration is not successfully 
+            ctx.status(400);
+        }
     }
+
+
     private void loginAccount(Context ctx)
     {
 
@@ -65,7 +79,7 @@ public class SocialMediaController {
         Message message = mapper.readValue(ctx.body(), Message.class);
         try 
         {
-            Account account = accountService.getAccountById(message.getPosted_by());
+            Account account = accountService.getAccountByAccountId(message.getPosted_by());
             Message createdMessage = messageService.createMessage(message, account);
             ctx.json(mapper.writeValueAsString(createdMessage));
         }
@@ -126,18 +140,17 @@ public class SocialMediaController {
     private void updateMessageByMessageId(Context ctx) throws JsonProcessingException, SQLException
     {
         ObjectMapper mapper = new ObjectMapper();
-        Message message = mapper.readValue(ctx.body(), Message.class);
-        try 
-        {   
-            // Get the message id 
-            int messageId = Integer.parseInt(ctx.pathParam("message_id"));
-            message.setMessage_id(messageId);
-
-            // Update the message with new value
+        Message message = mapper.readValue(ctx.body(), Message.class);  
+        int messageId = Integer.parseInt(ctx.pathParam("message_id")); 
+        try
+        {
             Message updatedMessage = messageService.updateMessageByMessageId(messageId, message);
-            ctx.json(updatedMessage);
+            if(updatedMessage != null)
+            {
+                ctx.json(mapper.writeValueAsString(updatedMessage));
+            }
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             // Set reponse status to 400 if the update of message is not successfully 
             ctx.status(400);
