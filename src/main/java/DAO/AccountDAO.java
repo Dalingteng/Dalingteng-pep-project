@@ -7,35 +7,40 @@ import java.util.*;
 
 public class AccountDAO 
 {
-    public List<Account> getAllAccounts()
+    /**
+     * This method retrieves all accounts from the database.
+     * 
+     * @return A list of all accounts in the database
+     * @throws SQLException if an error occurs during accessing database
+     */
+    public List<Account> getAllAccounts() throws SQLException
     {
         Connection connection = ConnectionUtil.getConnection();
         List<Account> accounts = new ArrayList<>();
-        try
+        String sql = "SELECT * FROM account;";
+        PreparedStatement ps = connection.prepareStatement(sql);
+        ResultSet rs = ps.executeQuery();
+        while(rs.next())
         {
-            String sql = "SELECT * FROM account;";
-            PreparedStatement ps = connection.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery();
-            while(rs.next())
-            {
-                Account account = new Account(rs.getInt("account_id"), rs.getString("username"), rs.getString("password"));
-                accounts.add(account);
-            }
-        }
-        catch(SQLException e)
-        {
-            System.out.println(e.getMessage());
+            Account account = new Account(rs.getInt("account_id"), rs.getString("username"), rs.getString("password"));
+            accounts.add(account);
         }
         return accounts;
     }
 
+    /**
+     * This method retrieves an account identified by an account ID
+     * 
+     * @param id The account ID of the account to be retrieved
+     * @return The retrieved account, or null if account did not exist
+     * @throws SQLException if an error occurs during accessing database
+     */
     public Account getAccountByAccountId(int id) throws SQLException
     {
         Connection connection = ConnectionUtil.getConnection();
         String sql = "SELECT * FROM account WHERE account_id=?;";
         PreparedStatement ps = connection.prepareStatement(sql);
         ps.setInt(1, id);
-
         ResultSet rs = ps.executeQuery();
         while(rs.next())
         {
@@ -46,10 +51,10 @@ public class AccountDAO
     }
     
     /**
-     * Check if username already exists in the database.
+     * This method checks if the username already existed in the database.
      * 
-     * @param username
-     * @return true if username already exists, otherwise, false.
+     * @param username The username to be checked
+     * @return True if existed, otherwise False
      */
     public boolean alreadyExist(String username) throws SQLException
     {
@@ -57,7 +62,6 @@ public class AccountDAO
         String sql = "SELECT COUNT(*) FROM account WHERE username=?;";
         PreparedStatement ps = connection.prepareStatement(sql);
         ps.setString(1, username);
-        
         ResultSet rs = ps.executeQuery();
         while(rs.next())
         {
@@ -67,14 +71,19 @@ public class AccountDAO
         return false;
     }
 
+    /**
+     * This method retrieves an account by a username.
+     * 
+     * @param username The username of the account to be retrieved
+     * @return The retrieved account by the username
+     * @throws SQLException if an error occurs during accessing database
+     */
     public Account getAccountByUsername(String username) throws SQLException
     {
         Connection connection = ConnectionUtil.getConnection();
-        
         String sql = "SELECT * FROM account WHERE username=?;";
         PreparedStatement ps = connection.prepareStatement(sql);
         ps.setString(1, username);
-
         ResultSet rs = ps.executeQuery();
         while(rs.next())
         {
@@ -82,10 +91,15 @@ public class AccountDAO
             return account;
         }
         return null;
- 
- 
     }
 
+    /**
+     * This method inserts an account into the database.
+     * 
+     * @param account The account to be inserted
+     * @return The inserted account
+     * @throws SQLException if an error occurs during accessing database
+     */
     public Account insertAccount(Account account) throws SQLException
     {
         Connection connection = ConnectionUtil.getConnection();
@@ -93,7 +107,6 @@ public class AccountDAO
         PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
         ps.setString(1, account.getUsername());
         ps.setString(2, account.getPassword());
-        
         ps.executeUpdate();
         ResultSet rs = ps.getGeneratedKeys();
         if(rs.next())
@@ -104,42 +117,39 @@ public class AccountDAO
         return null;
     }
 
-
-    public void updateAccount(int id, Account account)
+    /**
+     * This method updates an account identified by an account ID in the database.
+     * 
+     * @param id The account id of the account to be updated
+     * @param account The new account to update
+     * @throws SQLException if an error occurs during accessing database
+     */
+    public void updateAccount(int id, Account account) throws SQLException
     {
         Connection connection = ConnectionUtil.getConnection();
-        try
-        {
-            String sql = "UPDATE account SET username=?, password=? WHERE account_id=?;";
-            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, account.getUsername());
-            ps.setString(2, account.getPassword());
-            ps.setInt(3, id);
-
-            ps.executeUpdate();
-        }
-        catch(SQLException e)
-        {
-            System.out.println(e.getMessage());
-        }
+        String sql = "UPDATE account SET username=?, password=? WHERE account_id=?;";
+        PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+        ps.setString(1, account.getUsername());
+        ps.setString(2, account.getPassword());
+        ps.setInt(3, id);
+        ps.executeUpdate();
     }
     
-    public void deleteAccount(int id, Account account)
+    /**
+     * This method deletes an account identified by an account ID from the database.
+     * 
+     * @param id The account ID of the account to be deleted
+     * @param account The deleted account
+     * @return True if deleted, otherwise False
+     * @throws SQLException if an error occurs during accessing database
+     */
+    public boolean deleteAccount(int id) throws SQLException
     {
         Connection connection = ConnectionUtil.getConnection();
-        try
-        {
-            String sql = "DELETE * from account WHERE accont_id=?;";
-            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, account.getUsername());
-            ps.setString(2, account.getPassword());
-            ps.setInt(3, id);
-
-            ps.executeUpdate();
-        }
-        catch(SQLException e)
-        {
-            System.out.println(e.getMessage());
-        } 
+        String sql = "DELETE FROM account WHERE account_id=?;";
+        PreparedStatement ps = connection.prepareStatement(sql);
+        ps.setInt(1, id);
+        int rowsAffected = ps.executeUpdate();
+        return rowsAffected > 0;
     }
 }

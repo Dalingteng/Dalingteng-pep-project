@@ -9,6 +9,14 @@ import java.util.*;
 
 public class MessageDAO 
 {
+    /**
+     * This method inserts a message into the database.
+     * 
+     * @param message The message to be inserted
+     * @param account The account creating the message
+     * @return The inserted message
+     * @throws SQLException if an error occurs during accessing database
+     */
     public Message createMessage(Message message, Account account) throws SQLException
     {
         Connection connection = ConnectionUtil.getConnection();
@@ -17,7 +25,6 @@ public class MessageDAO
         ps.setInt(1, message.getPosted_by());
         ps.setString(2, message.getMessage_text());
         ps.setLong(3, message.getTime_posted_epoch());
-        
         ps.executeUpdate();
         ResultSet rs = ps.getGeneratedKeys();
         if(rs.next())
@@ -28,6 +35,12 @@ public class MessageDAO
         return null;
     }
 
+    /**
+     * This method retrieves all messages from the database.
+     * 
+     * @return A list of all messages in the database
+     * @throws SQLException if an error occurs during accessing database
+     */
     public List<Message> getAllMessages() throws SQLException
     {
         Connection connection = ConnectionUtil.getConnection();
@@ -43,6 +56,13 @@ public class MessageDAO
         return messages;
     }
     
+    /**
+     * This method retrieves a message by a message ID.
+     * 
+     * @param id The message ID of the message to be retrieved
+     * @return The retrieved message
+     * @throws SQLException if an error occurs during accessing database
+     */
     public Message getMessageByMessageId(int id) throws SQLException
     {
         Connection connection = ConnectionUtil.getConnection();
@@ -58,6 +78,12 @@ public class MessageDAO
         return null;
     }
 
+    /**
+     * This method deletes a message identified by a message ID from the database.
+     * @param id The message ID of the message to be deleted
+     * @return True if deleted, otherwise False
+     * @throws SQLException if an error occurs during accessing database
+     */
     public boolean deleteMessageByMessageId(int id) throws SQLException
     {
         Connection connection = ConnectionUtil.getConnection();
@@ -68,17 +94,30 @@ public class MessageDAO
         return rowsAffected > 0;
     }
 
+    /**
+     * This method updates a message identified by a message ID in the database.
+     * 
+     * @param id The message ID of the message to be updated
+     * @param message The new message to update
+     * @throws SQLException if an error occurs during accessing database
+     */
     public void updateMessageByMessageId(int id, Message message) throws SQLException
     {
         Connection connection = ConnectionUtil.getConnection();
         String sql = "UPDATE message SET message_text=? WHERE message_id=?;";
         PreparedStatement ps = connection.prepareStatement(sql);
-
         ps.setString(1, message.getMessage_text());
         ps.setInt(2, id);
         ps.executeUpdate();
     }
 
+    /**
+     * This method retrieves all messages posted by a specific account from the database.
+     * 
+     * @param accountId The account ID of the account whose messages to be retrieved
+     * @return A list of all messages posted by the specific account
+     * @throws SQLException if an error occurs during accessing database
+     */
     public List<Message> getMessageByAccountId(int accountId) throws SQLException
     {
         Connection connection = ConnectionUtil.getConnection();
@@ -94,5 +133,4 @@ public class MessageDAO
         }
         return messages;
     } 
-
 }
